@@ -1,6 +1,8 @@
 # URF Core NoSQL Demo
 
-Sample Unit of Work and Repository Framework (URF) with NoSQL and MongoDb
+Sample Unit of Work and Repository Framework (URF) with MongoDb
+
+> **Note**: This sample includes instructions for running MongoDB locally with Docker as well as remotely using [MongoDB Atlas free tier cluster](https://docs.atlas.mongodb.com/tutorial/deploy-free-tier-cluster/).
 
 ## Prerequisites
 
@@ -9,21 +11,24 @@ Sample Unit of Work and Repository Framework (URF) with NoSQL and MongoDb
   - To run Docker on Windows [enable Hyper-V](https://docs.microsoft.com/en-us/virtualization/hyper-v-on-windows/quick-start/enable-hyper-v#enable-the-hyper-v-role-through-settings)
 - Install [Robo 3T](https://robomongo.org/download).
 - Install [.NET Core SDK](https://dotnet.microsoft.com/download) 3.1 or greater.
-- Install dotnet [aspnet-codegenerator](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/tools/dotnet-aspnet-codegenerator?view=aspnetcore-3.1): `dotnet tool install -g dotnet-aspnet-codegenerator`
+  > **Note**: Update the SDK version in `global.json` to match the version installed on your machine.
+- Install [dotnet-aspnet-codegenerator](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/tools/dotnet-aspnet-codegenerator?view=aspnetcore-3.1): `dotnet tool install -g dotnet-aspnet-codegenerator`
 
-## MongoDb via Docker
+## Local MongoDb with Docker
 
-- Check that the C drive is shared with Docker.
-  - From Docker, select Settings, Resources, File Sharing.
-    ![docker-win-file-sharing](images/docker-win-file-sharing.png)
 - Run MongoDb Version 3.x via Docker.
   - This command will mount a volume where a shared database will reside on the host system in /tmp (MacOS).
+  > **Note**: Data will persist even if you remove and re-create the container.
     ```
-    docker run --name mongo -d --rm -p 27017:27017 -v /tmp/mongo/data:/data/db mongo:3-xenial
+    docker run --name mongo -d -p 27017:27017 -v /tmp/mongo/data:/data/db mongo
     ```
   - This command will mount a volume where a shared database will reside in the container (Windows).
+  > **Note**: MongoDB Docker image has a bug which prevents mounting a host volume in Windows.
+
+  > **Note**: Data will persist if you start and stop the container.
+  > You will lose data if you remove the container.
     ```
-    docker run --name mongo -d -p 27017:27017 -v /data/db mongo:3-xenial
+    docker run --name mongo -d -p 27017:27017 -v /data/db mongo
     ```
   - Check to see if it is running.
     ```
@@ -47,7 +52,7 @@ Sample Unit of Work and Repository Framework (URF) with NoSQL and MongoDb
     db.Books.find({}).pretty()
     db.Authors.find({}).pretty()
     ```
-- Connect to MongoDb from Robo 3T.
+- Connect to MongoDb from Robo 3T on port 27017.
     ![robo-3t-win-local-connection](images/robo-3t-win-local-connection.png)
 
 ## Models, Abstractions, Mongo Projects
@@ -128,18 +133,29 @@ Sample Unit of Work and Repository Framework (URF) with NoSQL and MongoDb
    - Remove `WeatherForecast` and `WeatherForecastController` classes.
    - Add NuGet package: URF.Core.Mongo
    - Reference Models, Abstractions and Mongo projects.
-   - Add `BookstoreDatabaseSettings` section to appsettings.json.
+   - Add `BookstoreDatabaseSettings` section to **appsettings.json**.
         ```json
         "BookstoreDatabaseSettings": {
         "BooksCollectionName": "Books",
-        "ConnectionString": "mongodb://localhost:27017",
+        "ConnectionString": "",
         "DatabaseName": "BookstoreDb"
         }
         ```
+   - Add **appsettings.Local.json** file with local MongoDB connection string.
+        ```json
+        {
+          "BookstoreDatabaseSettings": {
+            "ConnectionString": "mongodb://localhost:27017"
+          }
+        }
+        ```
+   - Update **launchSettings.json** file to set `"ASPNETCORE_ENVIRONMENT": "Local"`.
+   - If using Visual Studio Code, update `launch.json` file to set `"ASPNETCORE_ENVIRONMENT": "Local"`.
    - Create a `Settings` directory, add `IBookstoreDatabaseSettings` interface.
        ```csharp
        public interface IBookstoreDatabaseSettings
        {
+           public string AuthorsCollectionName { get; set; }
            string BooksCollectionName { get; set; }
            string ConnectionString { get; set; }
            string DatabaseName { get; set; }
@@ -149,6 +165,7 @@ Sample Unit of Work and Repository Framework (URF) with NoSQL and MongoDb
        ```csharp
        public class BookstoreDatabaseSettings : IBookstoreDatabaseSettings
        {
+           public string AuthorsCollectionName { get; set; }
            public string BooksCollectionName { get; set; }
            public string ConnectionString { get; set; }
            public string DatabaseName { get; set; }
@@ -159,11 +176,13 @@ Sample Unit of Work and Repository Framework (URF) with NoSQL and MongoDb
     ```csharp
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddControllers();
+        // Register settings
         services.Configure<BookstoreDatabaseSettings>(
             Configuration.GetSection(nameof(BookstoreDatabaseSettings)));
         services.AddSingleton<IBookstoreDatabaseSettings>(sp =>
             sp.GetRequiredService<IOptions<BookstoreDatabaseSettings>>().Value);
+
+        // Register Mongo client and collections
         services.AddSingleton<IMongoDatabase>(sp =>
         {
             var settings = sp.GetRequiredService<IBookstoreDatabaseSettings>();
@@ -177,14 +196,19 @@ Sample Unit of Work and Repository Framework (URF) with NoSQL and MongoDb
             return context.GetCollection<Author>(settings.AuthorsCollectionName);
         });
         services.AddSingleton<IMongoCollection<Book>>(sp =>
-            {
+        {
             var context = sp.GetRequiredService<IMongoDatabase>();
             var settings = sp.GetRequiredService<IBookstoreDatabaseSettings>();
             return context.GetCollection<Book>(settings.BooksCollectionName);
         });
+
+        // Register unit of work and repositories
         services.AddSingleton<IDocumentRepository<Author>, DocumentRepository<Author>>();
         services.AddSingleton<IDocumentRepository<Book>, DocumentRepository<Book>>();
         services.AddSingleton<IBookstoreUnitOfWork, BookstoreUnitOfWork>();
+
+        // Register controllers
+        services.AddControllers();
     }
     ```
 
@@ -251,15 +275,14 @@ Sample Unit of Work and Repository Framework (URF) with NoSQL and MongoDb
     }
     ```
 
-## Test Web API
+## Web API Tests with Postman
 
 1. Update `launchSettings.json` in the Properties folder.
    - Replace `weatherforecast` with `api/book`.
    - Set the `Api` project as the startup project.
-   - Select `Api` project for debugging and press F5.
-
+   - Press F5 to start debugging.
 2. Start the Web API project and test with Postman.
-   - Turn off 'SSL certificate verification' in Settings > General
+   - Turn off **SSL certificate verification** in Postman, Settings, General.
    - Replace `id` below with actual object id.
 
     ```
@@ -277,7 +300,7 @@ Sample Unit of Work and Repository Framework (URF) with NoSQL and MongoDb
         "author": "Jeffrey Richter"
     }
     ```
-    - Should return 201 Created with correct Location response header.
+    - Should return **201 Created** with correct Location response header.
     ```
     PUT: https://localhost:5001/api/book/5e6d47bfa70ee6419095d127
     ```
@@ -296,4 +319,63 @@ Sample Unit of Work and Repository Framework (URF) with NoSQL and MongoDb
     ```
     GET: https://localhost:5001/api/book/5e6d47bfa70ee6419095d127
     ```
-    - Should return 404 Not Found.
+    - Should return **404 Not Found**.
+
+## Free-Tier MongoDB Atlas Cluster
+
+1. Create a [MongoDB account](https://docs.atlas.mongodb.com/tutorial/create-atlas-account/) if necessary.
+   - [Sign into your account](https://account.mongodb.com/account/login).
+2. Deploy a [free-tier cluster](https://docs.atlas.mongodb.com/tutorial/deploy-free-tier-cluster/), or connect to an existing cluster.
+3. Secure your cluster.
+   - Whitelist your current IP address.
+   - Create a new user.
+     - For example, enter username `test-user`, password `Str0ngPa$$w0rd`
+4. Click the **Connect** button for different ways to connect to your cluster.
+   - Mongo Shell
+   - Application
+   - MongoDB Compass
+    ![connect-to-cluster](images/connect-to-cluster.png)
+5. Connect using MongoDB shell.
+    ```
+    docker exec -it mongo bash
+    ```
+   - Paste MongoDB shell connection string from the **Connect with the mongo shell** option.
+   - Provide password when prompted.
+6. Create the database, add a collection, insert data.
+    ```
+    use BookstoreDb
+    db.createCollection("Books")
+    db.Books.insertMany([{"Name":"Design Patterns","Price":54.93,"Category":"Computers","Author":"Ralph Johnson"},{"Name":"Clean Code","Price":43.15,"Category":"Computers","Author":"Robert C. Martin"}])
+    db.createCollection("Authors")
+    db.Authors.insertMany([{"Name":"Ralph Johnson","Country":"United States"},{"Name":"Robert C. Martin","Country":"United Kingdom"}])
+    ```
+7. Download and install [MongoDB Compass](http://docs.mongodb.com/compass/master/install/).
+   - Copy connection string from **Connect using MongoDB Compass** option, insert password, and create new connection.
+    ![mongodb-cluster-bookstoredb](images/mongodb-cluster-bookstoredb.png)
+
+## Store MongoSB Atlas Connection String in User Secrets
+
+> **Note**: Settings which include secrets, such as usernames and passwords, should not be checked into source code control.
+> Instead the **Secret Manager Tool** should be used to store sensitive data in a system-protected user profile folder on the local machine.
+
+1. Enable user secrets for the **Api** project.
+   - Open a terminal at the Api project folder.
+   - Initialize user secrets.
+    ```
+    dotnet user-secrets init
+    ```
+2. Define secret key and value for the MongoDB Atlas connection string.
+   - Replace `ConnectionString` with value from the **Connect your application** option, inserting the password for `test-user`.
+     - Specify **C# / .NET Driver** with **version 2.5 or later**.
+       > If the password contains special characters, such as `$`, you will need to escape them with preceeding backslashes. For example: `Str0ngPa\$\$w0rd`
+    ```
+    dotnet user-secrets set "BookstoreDatabaseSettings:ConnectionString" "ConnectionString"
+    ```
+    - View stored secrets.
+    ```
+    dotnet user-secrets list
+    ```
+3. Run Web API in the **Development** environment.
+   - Edit **launchSettings.json** to set `"ASPNETCORE_ENVIRONMENT": "Development"`.
+   - You should see the same data as in MongoDB Compass connected to MongoDB Atlas.
+   > By default user secrets is added to the configuration when the environment name is set to `Development`.

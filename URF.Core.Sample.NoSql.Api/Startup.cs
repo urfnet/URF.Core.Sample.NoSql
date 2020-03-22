@@ -1,3 +1,4 @@
+using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -26,11 +27,17 @@ namespace URF.Core.Sample.NoSql.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
+            // Print connection string
+            var connectionString = Configuration["BookstoreDatabaseSettings:ConnectionString"];
+            Console.WriteLine($"Connection String: {connectionString}");
+
+            // Register settings
             services.Configure<BookstoreDatabaseSettings>(
                 Configuration.GetSection(nameof(BookstoreDatabaseSettings)));
             services.AddSingleton<IBookstoreDatabaseSettings>(sp =>
                 sp.GetRequiredService<IOptions<BookstoreDatabaseSettings>>().Value);
+
+            // Register Mongo client and collections
             services.AddSingleton<IMongoDatabase>(sp =>
             {
                 var settings = sp.GetRequiredService<IBookstoreDatabaseSettings>();
@@ -49,9 +56,14 @@ namespace URF.Core.Sample.NoSql.Api
                 var settings = sp.GetRequiredService<IBookstoreDatabaseSettings>();
                 return context.GetCollection<Book>(settings.BooksCollectionName);
             });
+
+            // Register unit of work and repositories
             services.AddSingleton<IDocumentRepository<Author>, DocumentRepository<Author>>();
             services.AddSingleton<IDocumentRepository<Book>, DocumentRepository<Book>>();
             services.AddSingleton<IBookstoreUnitOfWork, BookstoreUnitOfWork>();
+
+            // Register controllers
+            services.AddControllers();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
