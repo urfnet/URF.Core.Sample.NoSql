@@ -64,5 +64,29 @@ namespace URF.Core.Sample.NoSql.Api.Controllers
             if (count == 0) return NotFound();
             return NoContent();
         }
+
+        // PUT: api/Book/AddReviewer/5
+        [HttpPut("AddReviewer/{id}")]
+        public async Task<ActionResult<Book>> AddReviewer(string id, [FromBody] Reviewer reviewer)
+        {
+            var result = await UnitOfWork.BooksRepository.AddReviewer(id, reviewer);
+            return Ok(result);
+        }
+
+        // PUT: api/Book/UpdateReviewer/5
+        [HttpPut("UpdateReviewer/{id}")]
+        public async Task<ActionResult<Book>> UpdateReviewer(string id, [FromBody] Reviewer reviewer)
+        {
+            var result = await UnitOfWork.BooksRepository.UpdateReviewer(id, reviewer);
+            return Ok(result);
+        }
+
+        // DELETE: api/Book/5/Reviewer/James Wood
+        [HttpDelete("{id}/Reviewer/{name}")]
+        public async Task<IActionResult> DeleteReviewer(string id, string name)
+        {
+            var result = await UnitOfWork.BooksRepository.DeleteReviewer(id, name);
+            return Ok(result);
+        }
     }
 }

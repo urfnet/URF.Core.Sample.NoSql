@@ -7,7 +7,7 @@ namespace URF.Core.Sample.NoSql.Mongo
     public class BookstoreUnitOfWork : IBookstoreUnitOfWork
     {
         public BookstoreUnitOfWork(IDocumentRepository<Author> authorsRepository,
-            IDocumentRepository<Book>booksRepository)
+            IBookRepository booksRepository)
         {
             AuthorsRepository = authorsRepository;
             BooksRepository = booksRepository;
@@ -15,6 +15,6 @@ namespace URF.Core.Sample.NoSql.Mongo
 
         public IDocumentRepository<Author> AuthorsRepository { get; }
 
-        public IDocumentRepository<Book> BooksRepository { get; }
+        public IBookRepository BooksRepository { get; }
     }
 }
