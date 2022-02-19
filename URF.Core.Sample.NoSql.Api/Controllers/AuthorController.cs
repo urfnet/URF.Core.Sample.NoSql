@@ -28,8 +28,8 @@ namespace URF.Core.Sample.NoSql.Api.Controllers
         }
 
         // GET: api/Author/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Author>> Get(string id)
+        [HttpGet("{id:guid}")]
+        public async Task<ActionResult<Author>> Get(Guid id)
         {
             var result = await UnitOfWork.AuthorsRepository.FindOneAsync(e => e.Id == id);
             if (result == null) return NotFound();
@@ -46,17 +46,17 @@ namespace URF.Core.Sample.NoSql.Api.Controllers
         }
 
         // PUT: api/Author/5
-        [HttpPut("{id}")]
-        public async Task<ActionResult<Author>> Put(string id, [FromBody] Author value)
+        [HttpPut("{id:guid}")]
+        public async Task<ActionResult<Author>> Put(Guid id, [FromBody] Author value)
         {
-            if (string.Compare(id, value.Id, StringComparison.OrdinalIgnoreCase) != 0) return BadRequest();
+            if (id != value.Id) return BadRequest();
             var result = await UnitOfWork.AuthorsRepository.FindOneAndReplaceAsync(e => e.Id == id, value);
             return Ok(result);
         }
 
         // DELETE: api/ApiWithActions/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(string id)
+        [HttpDelete("{id:guid}")]
+        public async Task<IActionResult> Delete(Guid id)
         {
             var count = await UnitOfWork.AuthorsRepository.DeleteOneAsync(e => e.Id == id);
             if (count == 0) return NotFound();

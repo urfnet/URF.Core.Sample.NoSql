@@ -28,8 +28,8 @@ namespace URF.Core.Sample.NoSql.Api.Controllers
         }
 
         // GET: api/Book/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Book>> Get(string id)
+        [HttpGet("{id:guid}")]
+        public async Task<ActionResult<Book>> Get(Guid id)
         {
             var result = await UnitOfWork.BooksRepository.FindOneAsync(e => e.Id == id);
             if (result == null) return NotFound();
@@ -45,17 +45,17 @@ namespace URF.Core.Sample.NoSql.Api.Controllers
         }
 
         // PUT: api/Book/5
-        [HttpPut("{id}")]
-        public async Task<ActionResult<Book>> Put(string id, [FromBody] Book value)
+        [HttpPut("{id:guid}")]
+        public async Task<ActionResult<Book>> Put(Guid id, [FromBody] Book value)
         {
-            if (string.Compare(id, value.Id, StringComparison.OrdinalIgnoreCase) != 0) return BadRequest();
+            if (id != value.Id) return BadRequest();
             var result = await UnitOfWork.BooksRepository.FindOneAndReplaceAsync(e => e.Id == id, value);
             return Ok(result);
         }
 
         // DELETE: api/Book/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(string id)
+        [HttpDelete("{id:guid}")]
+        public async Task<IActionResult> Delete(Guid id)
         {
             var count = await UnitOfWork.BooksRepository.DeleteOneAsync(e => e.Id == id);
             if (count == 0) return NotFound();
@@ -63,24 +63,24 @@ namespace URF.Core.Sample.NoSql.Api.Controllers
         }
 
         // PUT: api/Book/AddReviewer/5
-        [HttpPut("AddReviewer/{id}")]
-        public async Task<ActionResult<Book>> AddReviewer(string id, [FromBody] Reviewer reviewer)
+        [HttpPut("AddReviewer/{id:guid}")]
+        public async Task<ActionResult<Book>> AddReviewer(Guid id, [FromBody] Reviewer reviewer)
         {
             var result = await UnitOfWork.BooksRepository.AddReviewer(id, reviewer);
             return Ok(result);
         }
 
         // PUT: api/Book/UpdateReviewer/5
-        [HttpPut("UpdateReviewer/{id}")]
-        public async Task<ActionResult<Book>> UpdateReviewer(string id, [FromBody] Reviewer reviewer)
+        [HttpPut("UpdateReviewer/{id:guid}")]
+        public async Task<ActionResult<Book>> UpdateReviewer(Guid id, [FromBody] Reviewer reviewer)
         {
             var result = await UnitOfWork.BooksRepository.UpdateReviewer(id, reviewer);
             return Ok(result);
         }
 
         // DELETE: api/Book/5/Reviewer/James Wood
-        [HttpDelete("{id}/Reviewer/{name}")]
-        public async Task<IActionResult> DeleteReviewer(string id, string name)
+        [HttpDelete("{id:guid}/Reviewer/{name}")]
+        public async Task<IActionResult> DeleteReviewer(Guid id, string name)
         {
             var result = await UnitOfWork.BooksRepository.DeleteReviewer(id, name);
             return Ok(result);

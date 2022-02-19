@@ -2,17 +2,11 @@
 
 Sample Unit of Work and Repository Framework (URF) with MongoDb
 
-> **Note**: This sample includes instructions for running MongoDB locally with Docker as well as remotely using [MongoDB Atlas free tier cluster](https://docs.atlas.mongodb.com/tutorial/deploy-free-tier-cluster/).
-
 ## Prerequisites
 
 - Install [Docker Desktop](https://www.docker.com/products/docker-desktop).
-  - To run Docker in Windows on Parallels for Mac [enable nested virtualization](https://kb.parallels.com/en/116239).
-  - To run Docker on Windows [enable Hyper-V](https://docs.microsoft.com/en-us/virtualization/hyper-v-on-windows/quick-start/enable-hyper-v#enable-the-hyper-v-role-through-settings)
 - Install [Robo 3T](https://robomongo.org/download).
-- Install [.NET Core SDK](https://dotnet.microsoft.com/download) 3.1 or greater.
-  > **Note**: Update the SDK version in `global.json` to match the version installed on your machine.
-- Install [dotnet-aspnet-codegenerator](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/tools/dotnet-aspnet-codegenerator?view=aspnetcore-3.1): `dotnet tool install -g dotnet-aspnet-codegenerator`
+- Install [.NET Core SDK](https://dotnet.microsoft.com/download) 6.0 or greater.
 
 ## Local MongoDb with Docker
 
@@ -57,7 +51,7 @@ Sample Unit of Work and Repository Framework (URF) with MongoDb
 
 ## Models, Abstractions, Mongo Projects
 
-1. Create a `Models` .NET Standard 2.1 class library.
+1. Create a `Models` .NET class library.
    - Add package: MongoDB.Bson
    - Add a `Book` model to the Models folder.
     ```csharp
@@ -92,7 +86,7 @@ Sample Unit of Work and Repository Framework (URF) with MongoDb
     }
     ```
 
-2. Create an `Abstractions` .NET Standard 2.1 class library.
+2. Create an `Abstractions` .NET class library.
    - Add package: URF.Core.Abstractions
    - Reference the `Models` project.
    - Add `IUrfSampleUnitOfWork` interface with properties for authors and books repositories.
@@ -106,7 +100,7 @@ Sample Unit of Work and Repository Framework (URF) with MongoDb
     }
     ```
 
-3. Create an `Mongo` .NET Standard 2.1 class library.
+3. Create an `Mongo` .NET class library.
    - Add package: URF.Core.Mongo
    - Reference the `Models` and `Abstractions` projects.
    - Add `UrfSampleUnitOfWork` interface with properties for authors and books repositories.
@@ -136,31 +130,11 @@ Sample Unit of Work and Repository Framework (URF) with MongoDb
    - Add `BookstoreDatabaseSettings` section to **appsettings.json**.
         ```json
         "BookstoreDatabaseSettings": {
-        "BooksCollectionName": "Books",
-        "ConnectionString": "",
-        "DatabaseName": "BookstoreDb"
+          "BooksCollectionName": "Books",
+          "ConnectionString": "mongodb://localhost:27017",
+          "DatabaseName": "BookstoreDb"
         }
         ```
-   - Add **appsettings.Local.json** file with local MongoDB connection string.
-        ```json
-        {
-          "BookstoreDatabaseSettings": {
-            "ConnectionString": "mongodb://localhost:27017"
-          }
-        }
-        ```
-   - Update **launchSettings.json** file to set `"ASPNETCORE_ENVIRONMENT": "Local"`.
-   - If using Visual Studio Code, update `launch.json` file to set `"ASPNETCORE_ENVIRONMENT": "Local"`.
-   - Create a `Settings` directory, add `IBookstoreDatabaseSettings` interface.
-       ```csharp
-       public interface IBookstoreDatabaseSettings
-       {
-           public string AuthorsCollectionName { get; set; }
-           string BooksCollectionName { get; set; }
-           string ConnectionString { get; set; }
-           string DatabaseName { get; set; }
-       }
-       ```
    - Add `BookstoreDatabaseSettings` class.
        ```csharp
        public class BookstoreDatabaseSettings : IBookstoreDatabaseSettings
@@ -277,20 +251,15 @@ Sample Unit of Work and Repository Framework (URF) with MongoDb
 
 ## Web API Tests with Postman
 
-1. Update `launchSettings.json` in the Properties folder.
-   - Replace `weatherforecast` with `api/book`.
-   - Set the `Api` project as the startup project.
-   - Press F5 to start debugging.
-2. Start the Web API project and test with Postman.
-   - Turn off **SSL certificate verification** in Postman, Settings, General.
+1. Start the Web API project and test with Postman.
    - Replace `id` below with actual object id.
 
     ```
-    GET: https://localhost:5001/api/book
-    GET: https://localhost:5001/api/book/5e6d2f31d40521f24f7e582f
+    GET: https://localhost:5100/api/book
+    GET: https://localhost:5100/api/book/5e6d2f31d40521f24f7e582f
     ```
     ```
-    POST: https://localhost:5001/api/book
+    POST: https://localhost:5100/api/book
     ```
     ```json
     {
@@ -302,7 +271,7 @@ Sample Unit of Work and Repository Framework (URF) with MongoDb
     ```
     - Should return **201 Created** with correct Location response header.
     ```
-    PUT: https://localhost:5001/api/book/5e6d47bfa70ee6419095d127
+    PUT: https://localhost:5100/api/book/5e6d47bfa70ee6419095d127
     ```
     ```json
     {
@@ -314,68 +283,10 @@ Sample Unit of Work and Repository Framework (URF) with MongoDb
     }
     ```
     ```
-    DELETE: https://localhost:5001/api/book/5e6d47bfa70ee6419095d127
+    DELETE: https://localhost:5100/api/book/5e6d47bfa70ee6419095d127
     ```
     ```
-    GET: https://localhost:5001/api/book/5e6d47bfa70ee6419095d127
+    GET: https://localhost:5100/api/book/5e6d47bfa70ee6419095d127
     ```
     - Should return **404 Not Found**.
 
-## Free-Tier MongoDB Atlas Cluster
-
-1. Create a [MongoDB account](https://docs.atlas.mongodb.com/tutorial/create-atlas-account/) if necessary.
-   - [Sign into your account](https://account.mongodb.com/account/login).
-2. Deploy a [free-tier cluster](https://docs.atlas.mongodb.com/tutorial/deploy-free-tier-cluster/), or connect to an existing cluster.
-3. Secure your cluster.
-   - Whitelist your current IP address.
-   - Create a new user.
-     - For example, enter username `test-user`, password `Str0ngPa$$w0rd`
-4. Click the **Connect** button for different ways to connect to your cluster.
-   - Mongo Shell
-   - Application
-   - MongoDB Compass
-    ![connect-to-cluster](images/connect-to-cluster.png)
-5. Connect using MongoDB shell.
-    ```
-    docker exec -it mongo bash
-    ```
-   - Paste MongoDB shell connection string from the **Connect with the mongo shell** option.
-   - Provide password when prompted.
-6. Create the database, add a collection, insert data.
-    ```
-    use BookstoreDb
-    db.createCollection("Books")
-    db.Books.insertMany([{"Name":"Design Patterns","Price":54.93,"Category":"Computers","Author":"Ralph Johnson"},{"Name":"Clean Code","Price":43.15,"Category":"Computers","Author":"Robert C. Martin"}])
-    db.createCollection("Authors")
-    db.Authors.insertMany([{"Name":"Ralph Johnson","Country":"United States"},{"Name":"Robert C. Martin","Country":"United Kingdom"}])
-    ```
-7. Download and install [MongoDB Compass](http://docs.mongodb.com/compass/master/install/).
-   - Copy connection string from **Connect using MongoDB Compass** option, insert password, and create new connection.
-    ![mongodb-cluster-bookstoredb](images/mongodb-cluster-bookstoredb.png)
-
-## Store MongoSB Atlas Connection String in User Secrets
-
-> **Note**: Settings which include secrets, such as usernames and passwords, should not be checked into source code control.
-> Instead the **Secret Manager Tool** should be used to store sensitive data in a system-protected user profile folder on the local machine.
-
-1. Enable user secrets for the **Api** project.
-   - Open a terminal at the Api project folder.
-   - Initialize user secrets.
-    ```
-    dotnet user-secrets init
-    ```
-2. Define secret key and value for the MongoDB Atlas connection string.
-   - Replace `ConnectionString` with value from the **Connect your application** option, inserting the password for `test-user`.
-     - Specify **C# / .NET Driver** with **version 2.5 or later**.
-       > If the password contains special characters, such as `$`, you will need to escape them with preceeding backslashes. For example: `Str0ngPa\$\$w0rd`
-    ```
-    dotnet user-secrets set "BookstoreDatabaseSettings:ConnectionString" "ConnectionString"
-    ```
-    - View stored secrets.
-    ```
-    dotnet user-secrets list
-    ```
-3. Run Web API in the **Development** environment.
-   - Edit **launchSettings.json** to set `"ASPNETCORE_ENVIRONMENT": "Development"`.
-   - You should see the same data as in MongoDB Compass connected to MongoDB Atlas.
-   > By default user secrets is added to the configuration when the environment name is set to `Development`.

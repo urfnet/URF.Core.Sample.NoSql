@@ -1,14 +1,18 @@
 [
     {
-        "Name": "Design Patterns",
+        "Id": "587e581d-8da5-4f2f-97e1-0c4c1807438b",
+        "BookName": "Design Patterns",
         "Price": 54.93,
         "Category": "Computers",
-        "Author": "Ralph Johnson"
+        "Author": "Ralph Johnson",
+        "Reviewers": []
     },
     {
-        "Name": "Clean Code",
+        "Id": "bd14fca8-30e8-40c4-8d03-ccd768e38208",
+        "BookName": "Clean Code",
         "Price": 43.15,
         "Category": "Computers",
-        "Author": "Robert C. Martin"
+        "Author": "Robert C. Martin",
+        "Reviewers": []
     }
 ]
