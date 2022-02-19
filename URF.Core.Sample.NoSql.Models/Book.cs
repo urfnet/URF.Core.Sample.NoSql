@@ -1,6 +1,5 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using System.Collections.Generic;
 
 namespace URF.Core.Sample.NoSql.Models
 {
@@ -8,17 +7,17 @@ namespace URF.Core.Sample.NoSql.Models
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; }
+        public string Id { get; set; } = null!;
 
         [BsonElement("Name")]
-        public string BookName { get; set; }
+        public string BookName { get; set; } = null!;
 
         public decimal Price { get; set; }
 
-        public string Category { get; set; }
+        public string Category { get; set; } = null!;
 
-        public string Author { get; set; }
+        public string Author { get; set; } = null!;
 
-        public List<Reviewer> Reviewers { get; set; }
+        public List<Reviewer> Reviewers { get; set; } = null!;
     }
 }

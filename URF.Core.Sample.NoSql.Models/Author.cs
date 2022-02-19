@@ -7,10 +7,10 @@ namespace URF.Core.Sample.NoSql.Models
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; }
+        public string Id { get; set; } = null!;
 
-        public string Name { get; set; }
+        public string Name { get; set; } = null!;
 
-        public string Country { get; set; }
+        public string Country { get; set; } = null!;
     }
 }

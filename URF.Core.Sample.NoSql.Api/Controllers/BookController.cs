@@ -1,7 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using URF.Core.Mongo;
 using URF.Core.Sample.NoSql.Abstractions;
 using URF.Core.Sample.NoSql.Models;
@@ -51,7 +48,7 @@ namespace URF.Core.Sample.NoSql.Api.Controllers
         [HttpPut("{id}")]
         public async Task<ActionResult<Book>> Put(string id, [FromBody] Book value)
         {
-            if (string.Compare(id, value.Id, true) != 0) return BadRequest();
+            if (string.Compare(id, value.Id, StringComparison.OrdinalIgnoreCase) != 0) return BadRequest();
             var result = await UnitOfWork.BooksRepository.FindOneAndReplaceAsync(e => e.Id == id, value);
             return Ok(result);
         }

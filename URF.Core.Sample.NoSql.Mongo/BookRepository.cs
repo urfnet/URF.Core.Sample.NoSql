@@ -1,6 +1,4 @@
 ﻿using MongoDB.Driver;
-using System.Threading;
-using System.Threading.Tasks;
 using URF.Core.Mongo;
 using URF.Core.Sample.NoSql.Abstractions;
 using URF.Core.Sample.NoSql.Models;

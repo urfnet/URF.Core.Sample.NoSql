@@ -2,8 +2,8 @@
 {
     public class Reviewer
     {
-        public string Name { get; set; }
+        public string Name { get; set; } = null!;
 
-        public string Institute { get; set; }
+        public string Institute { get; set; } = null!;
     }
 }

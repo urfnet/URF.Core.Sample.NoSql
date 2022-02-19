@@ -1,15 +1,9 @@
-using System;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using URF.Core.Abstractions;
 using URF.Core.Mongo;
 using URF.Core.Sample.NoSql.Abstractions;
-using URF.Core.Sample.NoSql.Api.Settings;
+using URF.Core.Sample.NoSql.Api.Configuration;
 using URF.Core.Sample.NoSql.Models;
 using URF.Core.Sample.NoSql.Mongo;
 
@@ -34,26 +28,26 @@ namespace URF.Core.Sample.NoSql.Api
             // Register settings
             services.Configure<BookstoreDatabaseSettings>(
                 Configuration.GetSection(nameof(BookstoreDatabaseSettings)));
-            services.AddSingleton<IBookstoreDatabaseSettings>(sp =>
+            services.AddSingleton(sp =>
                 sp.GetRequiredService<IOptions<BookstoreDatabaseSettings>>().Value);
 
             // Register Mongo client and collections
-            services.AddSingleton<IMongoDatabase>(sp =>
+            services.AddSingleton(sp =>
             {
-                var settings = sp.GetRequiredService<IBookstoreDatabaseSettings>();
+                var settings = sp.GetRequiredService<BookstoreDatabaseSettings>();
                 var client = new MongoClient(settings.ConnectionString);
                 return client.GetDatabase(settings.DatabaseName);
             });
-            services.AddSingleton<IMongoCollection<Author>>(sp =>
+            services.AddSingleton(sp =>
             {
                 var context = sp.GetRequiredService<IMongoDatabase>();
-                var settings = sp.GetRequiredService<IBookstoreDatabaseSettings>();
+                var settings = sp.GetRequiredService<BookstoreDatabaseSettings>();
                 return context.GetCollection<Author>(settings.AuthorsCollectionName);
             });
-            services.AddSingleton<IMongoCollection<Book>>(sp =>
+            services.AddSingleton(sp =>
             {
                 var context = sp.GetRequiredService<IMongoDatabase>();
-                var settings = sp.GetRequiredService<IBookstoreDatabaseSettings>();
+                var settings = sp.GetRequiredService<BookstoreDatabaseSettings>();
                 return context.GetCollection<Book>(settings.BooksCollectionName);
             });
 

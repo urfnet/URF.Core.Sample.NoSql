@@ -1,6 +1,4 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using URF.Core.Abstractions;
+﻿using URF.Core.Abstractions;
 using URF.Core.Sample.NoSql.Models;
 
 namespace URF.Core.Sample.NoSql.Abstractions
